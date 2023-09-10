@@ -1,45 +1,50 @@
 const assert = require('assert')
 const { Pact, Matchers } = require('@pact-foundation/pact')
-const { fetchOrders } = require('./consumer')
 const { eachLike } = Matchers
+const get = require('./get')
 
 describe('Pact with Order API', () => {
   const provider = new Pact({
-    port: 8080,
-    consumer: 'OrderClient',
-    provider: 'OrderApi',
+    port: 8082,
+    consumer: 'consumer',
+    provider: 'provider',
   })
 
   before(() => provider.setup())
-
   after(() => provider.finalize())
 
   describe('when a call to the API is made', () => {
     before(async () => {
       return provider.addInteraction({
-        state: 'there are orders',
-        uponReceiving: 'a request for orders',
+        state: 'There are some users',
+        uponReceiving: 'a request to retrieve user',
         withRequest: {
-          path: '/orders',
+          path: '/api/users/2',
           method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
         },
         willRespondWith: {
-          body: eachLike({
-            id: 1,
-            items: eachLike({
-              name: 'burger',
-              quantity: 2,
-              value: 100,
-            }),
-          }),
           status: 200,
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+          },
+          body: {"data":{"id":2,"email":"janet.weaver@reqres.in","first_name":"Janet","last_name":"Weaver","avatar":"https://reqres.in/img/faces/2-image.jpg"},"support":{"url":"https://reqres.in/#support-heading","text":"To keep ReqRes free, contributions towards server costs are appreciated!"}},
         },
       })
     })
 
-    it('will receive the list of current orders', async () => {
-      const result = await fetchOrders()
-      assert.ok(result.length)
+    it('Ok Response', async () => {
+      const customHeaders = {
+        'Content-Type': 'application/json'
+      };
+      get(customHeaders)
+        .then((response) => {
+          assert.strictEqual(response.status, 200)
+          expect(response.data).toEqual({"data":{"id":2,"email":"janet.weaver@reqres.in","first_name":"Janet","last_name":"Weaver","avatar":"https://reqres.in/img/faces/2-image.jpg"},"support":{"url":"https://reqres.in/#support-heading","text":"To keep ReqRes free, contributions towards server costs are appreciated!"}});
+        })
     })
   })
 })
