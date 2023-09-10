@@ -3,7 +3,7 @@ const { Pact, Matchers } = require('@pact-foundation/pact')
 const { eachLike } = Matchers
 const get = require('./get')
 
-describe('Pact with Order API', () => {
+describe('Pact with user API', () => {
   const provider = new Pact({
     port: 8082,
     consumer: 'consumer',
